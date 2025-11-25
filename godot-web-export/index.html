@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sky Forge Riders</title>
+    <meta charset="UTF-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a237e 50%, #311b92 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        #gameContainer {
+            text-align: center;
+            padding: 20px;
+            position: relative;
+        }
+        #gameCanvas {
+            border: 3px solid #00ffff;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #001a33 0%, #003366 50%, #004080 100%);
+            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.4), inset 0 0 50px rgba(0, 255, 255, 0.1);
+            display: block;
+            margin: 20px auto;
+            position: relative;
+        }
+        h1 {
+            color: #00ffff;
+            margin-bottom: 10px;
+            font-size: 36px;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(0, 255, 255, 0.8); }
+            to { text-shadow: 0 0 30px rgba(0, 255, 255, 1), 0 0 40px rgba(0, 150, 255, 0.8); }
+        }
+        .info {
+            color: #b3e5fc;
+            font-size: 16px;
+            margin-bottom: 20px;
+            max-width: 600px;
+            line-height: 1.4;
+        }
+        .controls {
+            margin-top: 15px;
+            color: #81d4fa;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        .hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .hud-item {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 255, 0.5);
+        }
+        .score {
+            color: #4ade80;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.8);
+        }
+        .health-bar, .energy-bar {
+            width: 150px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff6666);
+            transition: width 0.3s ease;
+        }
+        .energy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4444ff, #6666ff);
+            transition: width 0.3s ease;
+        }
+        .speed-indicator {
+            color: #ffeb3b;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #status {
+            margin-top: 10px;
+            color: #4ade80;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .floating-islands {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1>🚁 Sky Forge Riders</h1>
+        <div class="info">Race through floating islands, battle AI opponents, and master aerial combat in this high-speed sky-bike racing game!</div>
+        
+        <div style="position: relative;">
+            <canvas id="gameCanvas" width="900" height="600"></canvas>
+            <div class="hud">
+                <div class="hud-item">
+                    <div>Health</div>
+                    <div class="health-bar">
+                        <div class="health-fill" id="healthFill" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="hud-item speed-indicator" id="speedIndicator">0 km/h</div>
+                <div class="hud-item">
+                    <div>Energy</div>
+                    <div class="energy-bar">
+                        <div class="energy-fill" id="energyFill" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="score">Score: <span id="score">0</span> | Lap: <span id="lap">1/3</span> | Position: <span id="position">1st</span></div>
+        <div class="controls">
+            🎮 Controls: W/S or ↑/↓ - Accelerate/Brake | A/D or ←/→ - Turn | SPACE - Drift | Click - Shoot | SHIFT - Boost | E - Shield | Q/R - Ascend/Descend
+        </div>
+        <div id="status">Race Ready! Press any key to start</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const lapElement = document.getElementById('lap');
+        const positionElement = document.getElementById('position');
+        const healthFill = document.getElementById('healthFill');
+        const energyFill = document.getElementById('energyFill');
+        const speedIndicator = document.getElementById('speedIndicator');
+        const statusElement = document.getElementById('status');
+        
+        // Game state
+        let score = 0;
+        let currentLap = 1;
+        let totalLaps = 3;
+        let currentPosition = 1;
+        let raceStarted = false;
+        let raceFinished = false;
+        const canvasWidth = 900;
+        const canvasHeight = 600;
+        
+        // Player sky-bike
+        let player = {
+            x: canvasWidth / 2,
+            y: canvasHeight - 100,
+            width: 50,
+            height: 30,
+            velocityX: 0,
+            velocityY: 0,
+            speed: 0,
+            maxSpeed: 8,
+            acceleration: 0.3,
+            deceleration: 0.2,
+            turnSpeed: 0.15,
+            driftFactor: 1.8,
+            health: 100,
+            maxHealth: 100,
+            energy: 100,
+            maxEnergy: 100,
+            angle: 0,
+            driftAngle: 0,
+            boosting: false,
+            shieldActive: false,
+            shootCooldown: 0,
+            boostCooldown: 0,
+            shieldCooldown: 0,
+            color: '#00ffff',
+            trail: []
+        };
+        
+        // AI opponents
+        let aiOpponents = [
+            {
+                x: canvasWidth / 2 - 60,
+                y: canvasHeight - 120,
+                width: 45,
+                height: 28,
+                speed: 6,
+                angle: 0,
+                health: 80,
+                maxHealth: 80,
+                color: '#ff6b6b',
+                behavior: 'aggressive',
+                shootCooldown: 0
+            },
+            {
+                x: canvasWidth / 2 + 60,
+                y: canvasHeight - 120,
+                width: 45,
+                height: 28,
+                speed: 5.5,
+                angle: 0,
+                health: 80,
+                maxHealth: 80,
+                color: '#ffd93d',
+                behavior: 'balanced',
+                shootCooldown: 0
+            },
+            {
+                x: canvasWidth / 2,
+                y: canvasHeight - 140,
+                width: 45,
+                height: 28,
+                speed: 6.5,
+                angle: 0,
+                health: 80,
+                maxHealth: 80,
+                color: '#6bcf7f',
+                behavior: 'defensive',
+                shootCooldown: 0
+            }
+        ];
+        
+        // Projectiles
+        let projectiles = [];
+        
+        // Power-ups
+        let powerUps = [
+            { x: 200, y: 300, type: 'speed', collected: false, respawnTime: 0 },
+            { x: 700, y: 300, type: 'health', collected: false, respawnTime: 0 },
+            { x: 450, y: 200, type: 'energy', collected: false, respawnTime: 0 }
+        ];
+        
+        // Checkpoints
+        let checkpoints = [
+            { x: canvasWidth / 2, y: 400, width: 200, height: 20, passed: false },
+            { x: 150, y: 250, width: 20, height: 150, passed: false },
+            { x: 750, y: 250, width: 20, height: 150, passed: false },
+            { x: canvasWidth / 2, y: 100, width: 200, height: 20, passed: false, isFinish: true }
+        ];
+        
+        // Floating islands (obstacles)
+        let islands = [
+            { x: 100, y: 450, width: 120, height: 80, color: '#2e7d32' },
+            { x: 680, y: 450, width: 120, height: 80, color: '#2e7d32' },
+            { x: 300, y: 350, width: 100, height: 60, color: '#1b5e20' },
+            { x: 500, y: 350, width: 100, height: 60, color: '#1b5e20' },
+            { x: 400, y: 150, width: 150, height: 70, color: '#2e7d32' }
+        ];
+        
+        // Input handling
+        let keys = {};
+        
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            if (!raceStarted && !raceFinished) {
+                raceStarted = true;
+                statusElement.textContent = "Race in progress!";
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+        
+        document.addEventListener('click', (e) => {
+            if (raceStarted && !raceFinished && player.shootCooldown <= 0) {
+                shootProjectile(player, true);
+                player.shootCooldown = 20;
+            }
+        });
+        
+        function shootProjectile(shooter, isPlayer) {
+            projectiles.push({
+                x: shooter.x,
+                y: shooter.y,
+                width: 8,
+                height: 4,
+                speed: 12,
+                angle: shooter.angle,
+                isPlayer: isPlayer,
+                color: isPlayer ? '#00ffff' : '#ff4444'
+            });
+        }
+        
+        function updatePlayer() {
+            // Handle input
+            if (keys['w'] || keys['arrowup']) {
+                player.speed = Math.min(player.speed + player.acceleration, player.maxSpeed);
+            } else if (keys['s'] || keys['arrowdown']) {
+                player.speed = Math.max(player.speed - player.deceleration, -player.maxSpeed / 2);
+            } else {
+                player.speed *= 0.95;
+            }
+            
+            // Turning
+            if (keys['a'] || keys['arrowleft']) {
+                player.angle -= player.turnSpeed * (player.speed / player.maxSpeed);
+            }
+            if (keys['d'] || keys['arrowright']) {
+                player.angle += player.turnSpeed * (player.speed / player.maxSpeed);
+            }
+            
+            // Drifting
+            if (keys[' '] && player.speed > 2) {
+                player.driftAngle = player.angle * 0.3;
+            } else {
+                player.driftAngle *= 0.9;
+            }
+            
+            // Boost
+            if (keys['shift'] && player.boostCooldown <= 0 && player.energy >= 20) {
+                player.boosting = true;
+                player.speed = Math.min(player.speed + 0.5, player.maxSpeed * 1.5);
+                player.energy -= 2;
+                if (player.energy <= 0) {
+                    player.boosting = false;
+                    player.boostCooldown = 100;
+                }
+            } else {
+                player.boosting = false;
+            }
+            
+            // Shield
+            if (keys['e'] && player.shieldCooldown <= 0 && player.energy >= 40) {
+                player.shieldActive = true;
+                player.energy -= 40;
+                player.shieldCooldown = 150;
+                setTimeout(() => { player.shieldActive = false; }, 3000);
+            }
+            
+            // Vertical movement
+            if (keys['q']) player.y -= 3;
+            if (keys['r']) player.y += 3;
+            
+            // Update position
+            let moveAngle = player.angle + player.driftAngle;
+            player.x += Math.cos(moveAngle) * player.speed;
+            player.y += Math.sin(moveAngle) * player.speed;
+            
+            // Keep player in bounds
+            player.x = Math.max(player.width/2, Math.min(canvasWidth - player.width/2, player.x));
+            player.y = Math.max(player.height/2, Math.min(canvasHeight - player.height/2, player.y));
+            
+            // Update trail
+            player.trail.push({ x: player.x, y: player.y, alpha: 1 });
+            if (player.trail.length > 20) player.trail.shift();
+            
+            // Regenerate energy
+            if (player.energy < player.maxEnergy) {
+                player.energy += 0.3;
+            }
+            
+            // Update cooldowns
+            if (player.shootCooldown > 0) player.shootCooldown--;
+            if (player.boostCooldown > 0) player.boostCooldown--;
+            if (player.shieldCooldown > 0) player.shieldCooldown--;
+        }
+        
+        function updateAI() {
+            aiOpponents.forEach((ai, index) => {
+                // Simple AI behavior
+                let targetX = canvasWidth / 2 + Math.sin(Date.now() * 0.001 + index) * 200;
+                let targetY = 200 + Math.cos(Date.now() * 0.0008 + index) * 150;
+                
+                let dx = targetX - ai.x;
+                let dy = targetY - ai.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 5) {
+                    ai.x += (dx / distance) * ai.speed;
+                    ai.y += (dy / distance) * ai.speed;
+                }
+                
+                ai.angle = Math.atan2(dy, dx);
+                
+                // AI shooting
+                if (ai.shootCooldown <= 0 && Math.random() < 0.02) {
+                    shootProjectile(ai, false);
+                    ai.shootCooldown = 60;
+                }
+                
+                if (ai.shootCooldown > 0) ai.shootCooldown--;
+            });
+        }
+        
+        function updateProjectiles() {
+            projectiles = projectiles.filter(proj => {
+                proj.x += Math.cos(proj.angle) * proj.speed;
+                proj.y += Math.sin(proj.angle) * proj.speed;
+                
+                // Check collision with player
+                if (!proj.isPlayer && checkCollision(proj, player)) {
+                    if (!player.shieldActive) {
+                        player.health -= 10;
+                        if (player.health <= 0) {
+                            player.health = 0;
+                            endRace(false);
+                        }
+                    }
+                    return false;
+                }
+                
+                // Check collision with AI
+                if (proj.isPlayer) {
+                    for (let ai of aiOpponents) {
+                        if (checkCollision(proj, ai)) {
+                            ai.health -= 15;
+                            score += 50;
+                            if (ai.health <= 0) {
+                                ai.health = 0;
+                                score += 200;
+                            }
+                            return false;
+                        }
+                    }
+                }
+                
+                // Remove if out of bounds
+                return proj.x > 0 && proj.x < canvasWidth && proj.y > 0 && proj.y < canvasHeight;
+            });
+        }
+        
+        function updatePowerUps() {
+            powerUps.forEach(powerUp => {
+                if (!powerUp.collected && checkCollision(player, powerUp)) {
+                    powerUp.collected = true;
+                    powerUp.respawnTime = 300;
+                    
+                    switch(powerUp.type) {
+                        case 'speed':
+                            player.speed = Math.min(player.speed + 2, player.maxSpeed);
+                            score += 25;
+                            break;
+                        case 'health':
+                            player.health = Math.min(player.health + 30, player.maxHealth);
+                            score += 25;
+                            break;
+                        case 'energy':
+                            player.energy = player.maxEnergy;
+                            score += 25;
+                            break;
+                    }
+                }
+                
+                if (powerUp.collected && powerUp.respawnTime > 0) {
+                    powerUp.respawnTime--;
+                    if (powerUp.respawnTime <= 0) {
+                        powerUp.collected = false;
+                    }
+                }
+            });
+        }
+        
+        function updateCheckpoints() {
+            checkpoints.forEach((checkpoint, index) => {
+                if (!checkpoint.passed && checkCollision(player, checkpoint)) {
+                    checkpoint.passed = true;
+                    score += 100;
+                    
+                    if (checkpoint.isFinish) {
+                        currentLap++;
+                        if (currentLap > totalLaps) {
+                            endRace(true);
+                        } else {
+                            // Reset checkpoints for next lap
+                            checkpoints.forEach(cp => cp.passed = false);
+                        }
+                    }
+                }
+            });
+        }
+        
+        function checkCollision(obj1, obj2) {
+            return obj1.x < obj2.x + obj2.width &&
+                   obj1.x + obj1.width > obj2.x &&
+                   obj1.y < obj2.y + obj2.height &&
+                   obj1.y + obj1.height > obj2.y;
+        }
+        
+        function drawSkyBike(bike, isPlayer = false) {
+            ctx.save();
+            ctx.translate(bike.x, bike.y);
+            ctx.rotate(bike.angle);
+            
+            // Draw trail
+            if (isPlayer && bike.trail.length > 1) {
+                ctx.strokeStyle = bike.boosting ? '#ff00ff' : '#00ffff';
+                ctx.lineWidth = 3;
+                ctx.globalAlpha = 0.5;
+                ctx.beginPath();
+                bike.trail.forEach((point, index) => {
+                    if (index === 0) {
+                        ctx.moveTo(point.x - bike.x, point.y - bike.y);
+                    } else {
+                        ctx.lineTo(point.x - bike.x, point.y - bike.y);
+                    }
+                });
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+            
+            // Draw bike body
+            ctx.fillStyle = bike.color;
+            ctx.fillRect(-bike.width/2, -bike.height/2, bike.width, bike.height);
+            
+            // Draw cockpit
+            ctx.fillStyle = isPlayer ? '#ffffff' : '#333333';
+            ctx.fillRect(-bike.width/4, -bike.height/4, bike.width/2, bike.height/2);
+            
+            // Draw thruster effect
+            if (Math.abs(bike.speed) > 0.5) {
+                ctx.fillStyle = bike.boosting ? '#ff00ff' : '#ffaa00';
+                ctx.globalAlpha = 0.8;
+                ctx.fillRect(-bike.width/4, bike.height/2, bike.width/2, 10 + Math.abs(bike.speed) * 2);
+                ctx.globalAlpha = 1;
+            }
+            
+            // Draw shield
+            if (isPlayer && bike.shieldActive) {
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 0.5;
+                ctx.beginPath();
+                ctx.arc(0, 0, bike.width, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+            
+            ctx.restore();
+        }
+        
+        function render() {
+            // Clear canvas with gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+            gradient.addColorStop(0, '#001a33');
+            gradient.addColorStop(0.5, '#003366');
+            gradient.addColorStop(1, '#004080');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Draw floating islands
+            islands.forEach(island => {
+                ctx.fillStyle = island.color;
+                ctx.fillRect(island.x, island.y, island.width, island.height);
+                ctx.strokeStyle = '#1b5e20';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(island.x, island.y, island.width, island.height);
+            });
+            
+            // Draw checkpoints
+            checkpoints.forEach(checkpoint => {
+                ctx.fillStyle = checkpoint.passed ? '#00ff00' : '#ffff00';
+                ctx.globalAlpha = 0.3;
+                ctx.fillRect(checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
+                ctx.globalAlpha = 1;
+                ctx.strokeStyle = checkpoint.passed ? '#00ff00' : '#ffff00';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
+                
+                if (checkpoint.isFinish) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('FINISH', checkpoint.x + checkpoint.width/2, checkpoint.y + checkpoint.height/2 + 5);
+                }
+            });
+            
+            // Draw power-ups
+            powerUps.forEach(powerUp => {
+                if (!powerUp.collected) {
+                    ctx.save();
+                    ctx.translate(powerUp.x, powerUp.y);
+                    ctx.rotate(Date.now() * 0.002);
+                    
+                    let color = '#00ff00';
+                    if (powerUp.type === 'health') color = '#ff0000';
+                    if (powerUp.type === 'energy') color = '#0000ff';
+                    
+                    ctx.fillStyle = color;
+                    ctx.globalAlpha = 0.8;
+                    ctx.fillRect(-10, -10, 20, 20);
+                    ctx.globalAlpha = 1;
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(-10, -10, 20, 20);
+                    
+                    ctx.restore();
+                }
+            });
+            
+            // Draw AI opponents
+            aiOpponents.forEach(ai => {
+                if (ai.health > 0) {
+                    drawSkyBike(ai, false);
+                    
+                    // Health bar
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(ai.x - 20, ai.y - 25, 40, 4);
+                    ctx.fillStyle = '#00ff00';
+                    ctx.fillRect(ai.x - 20, ai.y - 25, 40 * (ai.health / ai.maxHealth), 4);
+                }
+            });
+            
+            // Draw player
+            if (player.health > 0) {
+                drawSkyBike(player, true);
+            }
+            
+            // Draw projectiles
+            projectiles.forEach(proj => {
+                ctx.fillStyle = proj.color;
+                ctx.fillRect(proj.x - proj.width/2, proj.y - proj.height/2, proj.width, proj.height);
+            });
+            
+            // Update HUD
+            scoreElement.textContent = score;
+            lapElement.textContent = `${currentLap}/${totalLaps}`;
+            positionElement.textContent = currentPosition + getOrdinalSuffix(currentPosition);
+            healthFill.style.width = `${(player.health / player.maxHealth) * 100}%`;
+            energyFill.style.width = `${(player.energy / player.maxEnergy) * 100}%`;
+            speedIndicator.textContent = `${Math.round(Math.abs(player.speed) * 50)} km/h`;
+        }
+        
+        function getOrdinalSuffix(num) {
+            const j = num % 10, k = num % 100;
+            if (j == 1 && k != 11) return "st";
+            if (j == 2 && k != 12) return "nd";
+            if (j == 3 && k != 13) return "rd";
+            return "th";
+        }
+        
+        function endRace(victory) {
+            raceFinished = true;
+            if (victory) {
+                statusElement.textContent = `🏆 Victory! Final Score: ${score}`;
+                score += 1000;
+            } else {
+                statusElement.textContent = `💀 Race Over! Final Score: ${score}`;
+            }
+        }
+        
+        function gameLoop() {
+            if (raceStarted && !raceFinished) {
+                updatePlayer();
+                updateAI();
+                updateProjectiles();
+                updatePowerUps();
+                updateCheckpoints();
+            }
+            
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start the game
+        gameLoop();
+        
+        console.log('🚁 Sky Forge Riders loaded successfully! Type: aerial combat racing');
+    </script>
+</body>
+</html>
