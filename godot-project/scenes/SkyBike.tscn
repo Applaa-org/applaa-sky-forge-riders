@@ -1,0 +1,48 @@
+[gd_scene load_steps=6 format=3 uid="uid://d4f5g6h7i8j9k"]
+
+[ext_resource type="Script" path="res://scripts/SkyBike.gd" id="1"]
+[ext_resource type="Mesh" path="res://assets/bikes/standard_bike.obj" id="2"]
+[ext_resource type="Material" path="res://assets/materials/neon_blue_material.tres" id="3"]
+[ext_resource type="Material" path="res://assets/materials/thruster_material.tres" id="4"]
+[ext_resource type="Material" path="res://assets/materials/shield_material.tres" id="5"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(2, 1, 4)
+
+[node name="SkyBike" type="CharacterBody3D"]
+groups = ["player"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+script = ExtResource("1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+mesh = ExtResource("2")
+material_override = ExtResource("3")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_1")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866, 0, -0.866, 0.5, 0, 3, -8)
+
+[node name="ThrusterLeft" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, -0.5, 1.5)
+emitting = false
+process_material = ExtResource("4")
+
+[node name="ThrusterRight" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, -0.5, 1.5)
+emitting = false
+process_material = ExtResource("4")
+
+[node name="BoostTrail" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -2)
+emitting = false
+
+[node name="ShootPoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, -2)
+
+[node name="ShieldMesh" type="MeshInstance3D" parent="."]
+visible = false
+mesh = ExtResource("2")
+material_override = ExtResource("5")

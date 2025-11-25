@@ -1,0 +1,59 @@
+[gd_scene load_steps=8 format=3 uid="uid://n5q6r7s8t9u0v"]
+
+[ext_resource type="PackedScene" uid="uid://d4f5g6h7i8j9k" path="res://scenes/SkyBike.tscn" id="1"]
+[ext_resource type="PackedScene" uid="uid://e6h7i8j9k0l1m" path="res://scenes/AIRacer.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://g8j9k0l1m2n3o" path="res://scenes/Checkpoint.tscn" id="3"]
+[ext_resource type="PackedScene" uid="uid://h9k0l1m2n3o4p" path="res://scenes/PowerUp.tscn" id="4"]
+[ext_resource type="PackedScene" uid="uid://m4p5q6r7s8t9u" path="res://scenes/RaceHUD.tscn" id="5"]
+[ext_resource type="Environment" path="res://assets/environments/azure_sky.env" id="6"]
+[ext_resource type="Script" path="res://scripts/Main.gd" id="7"]
+
+[node name="Main" type="Node3D"]
+script = ExtResource("7")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("6")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.433, 0.25, 0, 0.5, 0.866, -0.5, -0.75, 0.433, 0, 10, 0)
+light_energy = 1.0
+shadow_enabled = true
+
+[node name="SkyBike" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
+
+[node name="AIRacer1" parent="." instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 5, 0)
+
+[node name="AIRacer2" parent="." instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 5, 0)
+
+[node name="AIRacer3" parent="." instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 5, 0)
+
+[node name="Track" type="Node3D" parent="."]
+
+[node name="Checkpoint1" parent="Track" instance=ExtResource("3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 50)
+
+[node name="Checkpoint2" parent="Track" instance=ExtResource("3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 5, 0)
+
+[node name="Checkpoint3" parent="Track" instance=ExtResource("3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, -50)
+
+[node name="FinishLine" parent="Track" instance=ExtResource("3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
+
+[node name="PowerUps" type="Node3D" parent="."]
+
+[node name="PowerUp1" parent="PowerUps" instance=ExtResource("4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 8, 25)
+
+[node name="PowerUp2" parent="PowerUps" instance=ExtResource("4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 8, 25)
+
+[node name="PowerUp3" parent="PowerUps" instance=ExtResource("4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 8, -25)
+
+[node name="RaceHUD" parent="." instance=ExtResource("5")]

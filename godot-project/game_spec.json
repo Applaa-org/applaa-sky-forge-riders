@@ -1,0 +1,55 @@
+{
+  "game": {
+    "name": "Sky Forge Riders",
+    "type": "3D",
+    "genre": "racing combat",
+    "description": "A fast-paced 3D aerial combat racing game set in a floating-island world where players ride mechanical sky-bikes"
+  },
+  "settings": {
+    "window": {"width": 1920, "height": 1080},
+    "physics": {"gravity": -9.8}
+  },
+  "player": {
+    "name": "SkyRider",
+    "health": 100,
+    "speed": 300,
+    "abilities": ["boost", "drift", "shoot", "dodge"]
+  },
+  "entities": {
+    "enemies": [
+      {
+        "name": "AIDrone",
+        "health": 80,
+        "speed": 280,
+        "damage": 20,
+        "behavior": "aggressive"
+      }
+    ],
+    "collectibles": [
+      {
+        "name": "PowerCore",
+        "value": 10
+      },
+      {
+        "name": "SpeedBoost",
+        "value": 5
+      }
+    ]
+  },
+  "levels": [
+    {
+      "name": "Azure Archipelago",
+      "background": "floating_islands",
+      "obstacles": ["rocks", "wind_jets", "coral_arches"]
+    }
+  ],
+  "logic": {
+    "winCondition": "finish_race",
+    "loseCondition": "eliminated",
+    "scoring": {
+      "pointsPerLap": 100,
+      "pointsPerHit": 25,
+      "pointsPerCollectible": 10
+    }
+  }
+}

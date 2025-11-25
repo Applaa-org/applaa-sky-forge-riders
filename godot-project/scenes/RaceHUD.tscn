@@ -1,0 +1,114 @@
+[gd_scene load_steps=3 format=3 uid="uid://m4p5q6r7s8t9u"]
+
+[ext_resource type="Script" path="res://scripts/RaceHUD.gd" id="1"]
+[ext_resource type="Theme" path="res://assets/ui_theme.tres" id="2"]
+
+[node name="RaceHUD" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+theme = ExtResource("2")
+
+[node name="SpeedLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -80.0
+offset_right = 200.0
+offset_bottom = -40.0
+theme_override_font_sizes/font_size = 24
+text = "0 km/h"
+
+[node name="LapLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -40.0
+offset_right = 200.0
+offset_bottom = -10.0
+theme_override_font_sizes/font_size = 20
+text = "Lap 1/3"
+
+[node name="PositionLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -80.0
+offset_right = -20.0
+offset_bottom = -40.0
+theme_override_font_sizes/font_size = 24
+text = "Position: 1"
+
+[node name="ScoreLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -40.0
+offset_right = -20.0
+offset_bottom = -10.0
+theme_override_font_sizes/font_size = 20
+text = "Score: 0"
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -60.0
+offset_right = 150.0
+offset_bottom = -40.0
+max_value = 100.0
+value = 100.0
+
+[node name="EnergyBar" type="ProgressBar" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -35.0
+offset_right = 150.0
+offset_bottom = -15.0
+max_value = 100.0
+value = 100.0
+
+[node name="WeaponAmmo" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -150.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 50.0
+theme_override_font_sizes/font_size = 18
+text = "Ready"
+
+[node name="Minimap" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -180.0
+offset_right = 180.0
+offset_bottom = -90.0
